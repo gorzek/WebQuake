@@ -1,5 +1,31 @@
 Sys = {};
 
+Sys.ongamepadpoll = function(e) { // on joystick event
+    // gamepad events are not edge triggered
+
+    Key.gamepadlastaxes = e.axes;
+    if (Key.gamepadlastbuttons) {
+
+	for (var i=0; i<e.buttons.length; i++) {
+	    if (e.buttons[i].value != Key.gamepadlastbuttons[i]) {
+		if (e.buttons[i].value) {
+		    Key.Event(Key.k['joy'+(i+1)], true)
+		    //console.log("JOY"+(i+1), true)
+		} else {
+		    Key.Event(Key.k['joy'+(i+1)])
+		    //console.log("JOY"+(i+1), false)
+		}
+	    }
+	}
+	Key.gamepadlastbuttons = e.buttons.map( function(b) { return b.value } )
+
+    } else {
+	// first time gamepad was registered
+	// likely no buttons were pressed. move on
+	Key.gamepadlastbuttons = e.buttons.map( function(b) { return b.value } )
+    }
+}
+
 Sys.events = ['onbeforeunload', 'oncontextmenu', 'onfocus', 'onkeydown', 'onkeyup', 'onmousedown', 'onmouseup', 'onmousewheel', 'onunload', 'onwheel'];
 
 Sys.Quit = function()
@@ -16,13 +42,14 @@ Sys.Quit = function()
 		document.getElementById('end2').style.display = 'inline';
 	else
 		document.getElementById('end1').style.display = 'inline';
+	document.exitPointerLock()
 	throw new Error;
 };
 
 Sys.Print = function(text)
 {
-	if (window.console != null)
-		console.log(text);
+    if (window.console != null)
+	console.log(text);
 };
 
 Sys.Error = function(text)
@@ -43,6 +70,7 @@ Sys.Error = function(text)
 		for (; i < Con.text.length; ++i)
 			console.log(Con.text[i].text);
 	}
+	console.log('sys.error',text)
 	alert(text);
 	throw new Error(text);
 };
@@ -52,7 +80,35 @@ Sys.FloatTime = function()
 	return Date.now() * 0.001 - Sys.oldtime;
 };
 
-window.onload = function()
+function decode_arguments_hash() {
+    var hash = window.location.hash.slice(1,window.location.hash.length)
+    if (hash.length == 0) {
+        return {}
+    }
+    var parts = hash.split('&')
+    var args = {}
+
+    for (var i=0; i<parts.length; i++) {
+        var kv = parts[i].split('=')
+        args[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1])
+    }
+    console.log('location hash args',args)
+    return args
+}
+
+window.onload = function() {
+    var hash = decode_arguments_hash()
+    if (hash.delay) {
+        setTimeout( function() {
+            window.onload_()
+        }, hash.delay)
+    } else {
+        window.onload_()
+    }
+}
+
+
+window.onload_ = function()
 {
 	if (Number.isNaN != null)
 		Q.isNaN = Number.isNaN;

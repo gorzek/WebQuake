@@ -1,7 +1,6 @@
 COM = {};
 
 COM.argv = [];
-
 COM.standard_quake = true;
 
 COM.DefaultExtension = function(path, extension)
@@ -93,7 +92,7 @@ COM.CheckRegistered = function()
 	if (h == null)
 	{
 		Con.Print('Playing shareware version.\n');
-		if (COM.modified === true)
+		if (false && COM.modified === true)
 			Sys.Error('You must have the registered version to use modified games');
 		return;
 	}
